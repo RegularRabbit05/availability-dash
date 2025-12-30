@@ -1,0 +1,19 @@
+{
+	"$schema": "node_modules/wrangler/config-schema.json",
+	"name": "availability-dash",
+	"main": "src/index.js",
+	"compatibility_date": "2025-12-30",
+	"observability": {
+		"enabled": true
+	},
+	"assets": {
+		"directory": "./dist/",
+		"binding": "ASSETS",
+		"not_found_handling": "single-page-application",
+		"run_worker_first": ["/status", "/nodes"]
+  	},
+	"vars": {
+		"BACKEND_HOSTNAME": "URL TO HOSTED RegularRabbit/availability",
+		"NODES_LINK": "URL TO HOSTED availability nodes JSON"
+	}
+}

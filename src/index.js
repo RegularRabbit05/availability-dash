@@ -19,10 +19,6 @@ export default {
 			}
 			return result;
 		}
-		if (request.url.includes('/nodes')) {
-			let result = await fetch(env.NODES_LINK);
-			return result;
-		}
 		return new Response('Not Found', { status: 404 });
 	},
 };

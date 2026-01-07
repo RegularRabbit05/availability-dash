@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <script>window.NODES_ENDPOINT = 'https://node-routes.pages.dev/index.json';</script>
+    <script>window.NODES_ENDPOINT = 'URL TO NODES LIST JSON';</script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Node Status Dashboard</title>
@@ -146,6 +146,12 @@
             word-break: break-all;
         }
 
+        .node-meta {
+            margin-top: 10px;
+            color: #9ca3af;
+            font-size: 0.9rem;
+        }
+
         .summary {
             background: #2b2a33;
             border-radius: 12px;
@@ -255,24 +261,10 @@
                 }
 
                 const statusNodes = await statusResponse.json();
-                const nodesData = await nodesResponse.json();
+            
+                statusNodes.sort((a, b) => a.ip.localeCompare(b.ip));
                 
-                const statusIPs = statusNodes.map(node => node.ip.split(':')[0]);
-                const allNodes = nodesData.nodes;
-                
-                const missingNode = allNodes.find(node => !statusIPs.includes(node));
-                
-                let finalNodes = [...statusNodes];
-                if (missingNode) {
-                    finalNodes.push({
-                        ip: missingNode,
-                        up: true
-                    });
-                }
-                
-                finalNodes.sort((a, b) => a.ip.localeCompare(b.ip));
-                
-                renderNodes(finalNodes);
+                renderNodes(statusNodes);
                 updateLastUpdateTime();
             } catch (error) {
                 renderError(error);
@@ -294,6 +286,7 @@
                                 </span>
                             </div>
                             <div class="node-ip">${escapeHtml(node.ip.split(':')[0])}</div>
+                            <div class="node-meta">${escapeHtml(formatUptime(node.since, node.up))}</div>
                         </div>
                     `).join('')}
                 </div>
@@ -332,6 +325,39 @@
             const now = new Date();
             const timeString = now.toLocaleTimeString();
             document.getElementById('lastUpdate').textContent = `Last updated: ${timeString}`;
+        }
+
+        function formatUptime(since, isUp) {
+            if (!since && since !== 0) {
+                return 'Uptime: N/A';
+            }
+
+            const sinceMs = Number(since) * 1000;
+            if (Number.isNaN(sinceMs)) {
+                return 'Uptime: N/A';
+            }
+
+            const now = Date.now();
+            const diffMs = Math.max(0, now - sinceMs);
+            const seconds = Math.floor(diffMs / 1000);
+            const days = Math.floor(seconds / 86400);
+            const hours = Math.floor((seconds % 86400) / 3600);
+            const minutes = Math.floor((seconds % 3600) / 60);
+
+            const statusLabel = isUp ? 'Uptime' : 'Down since';
+            if (!isUp) {
+                return `${statusLabel}: ${new Date(sinceMs).toLocaleString()}`;
+            }
+
+            const parts = [];
+            if (days) parts.push(`${days}d`);
+            if (hours) parts.push(`${hours}h`);
+            if (minutes) parts.push(`${minutes}m`);
+            if (!parts.length) {
+                parts.push('just now');
+            }
+
+            return `${statusLabel}: ${parts.join(' ')}`;
         }
 
         function escapeHtml(text) {
